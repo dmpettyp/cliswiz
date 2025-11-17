@@ -13,6 +13,7 @@ var (
 	BlueMagenta = NewColor(126, 0, 255)
 	Magenta     = NewColor(255, 0, 255)
 	MagentaRed  = NewColor(255, 0, 126)
+	White       = NewColor(255, 255, 255)
 )
 
 var Rainbow = []Color{

@@ -7,7 +7,25 @@ import (
 	"net"
 )
 
-type Device struct{}
+type Device struct {
+	conn *net.UDPConn
+}
+
+func NewDevice(ip_address string) (*Device, error) {
+	addr := &net.UDPAddr{
+		IP:   net.ParseIP(ip_address),
+		Port: 38899,
+	}
+
+	conn, err := net.DialUDP("udp", nil, addr)
+	if err != nil {
+		return nil, fmt.Errorf("Error creating UDP client: %w", err)
+	}
+
+	return &Device{
+		conn,
+	}, nil
+}
 
 func (d *Device) SendCommand(cmd any) error {
 	jsonBytes, err := json.Marshal(cmd)
@@ -18,23 +36,8 @@ func (d *Device) SendCommand(cmd any) error {
 
 	// Print the JSON string
 	fmt.Println(string(jsonBytes))
-	addr, err := net.ResolveUDPAddr("udp", "192.168.86.29:38899")
-	if err != nil {
-		log.Fatalf("Error creating UDP addr: %v", err)
-	}
-	// addr := net.UDPAddr{
-	// 	IP:   net.ParseIP("192.168.86.29"),
-	// 	Port: 38899,
-	// }
 
-	conn, err := net.DialUDP("udp", nil, addr)
-	if err != nil {
-		log.Fatalf("Error creating UDP client: %v", err)
-	}
-	defer conn.Close()
-	fmt.Printf("The UDP server is %s\n", conn.RemoteAddr().String())
-
-	n, err := conn.Write(jsonBytes)
+	n, err := d.conn.Write(jsonBytes)
 	if err != nil {
 		log.Fatalf("Error sending data: %v", err)
 	}
@@ -42,7 +45,7 @@ func (d *Device) SendCommand(cmd any) error {
 	fmt.Println(n)
 
 	buffer := make([]byte, 1024)
-	n, _, err = conn.ReadFromUDP(buffer)
+	n, _, err = d.conn.ReadFromUDP(buffer)
 	if err != nil {
 		log.Fatalf("Error reading response: %v", err)
 	}
